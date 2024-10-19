@@ -4,7 +4,54 @@ from PIL import Image
 import streamlit as st
 from io import BytesIO
 from colorthief import ColorThief
-from st_copy_to_clipboard import st_copy_to_clipboard
+
+
+from pathlib import Path
+from typing import Optional
+
+import streamlit as st
+import streamlit.components.v1 as components
+
+# Tell streamlit that there is a component called streamlit_copy_to_clipboard,
+# and that the code to display that component is in the "frontend" folder
+frontend_dir = (Path(__file__).parent / "frontend").absolute()
+_component_func = components.declare_component(
+    "streamlit_copy_to_clipboard", path=str(frontend_dir)
+)
+
+
+def st_copy_to_clipboard(
+    text: str,
+    before_copy_label: str = "📋",
+    after_copy_label: str = "✅",
+    show_text: bool = False,
+    key: Optional[str] = None,
+):
+    """
+    Streamlit component to copy text to clipboard.
+
+    Parameters
+    ----------
+    text : str
+        The text to be copied to the clipboard.
+    before_copy_label : str
+        Label of the button before text is copied.
+    after_copy_label : str
+        Label of the button after text is copied.
+    show_text: bool
+        If True, show text right before the button and make it clickable as well
+    key : str or None
+        An optional key that uniquely identifies the component.
+    """
+    component_value = _component_func(
+        key=key,
+        text=text,
+        before_copy_label=before_copy_label,
+        after_copy_label=after_copy_label,
+        show_text=show_text,
+    )
+    return component_value
+
 
 # Function to extract color suggestions from an image
 def get_image_colors(image_path, num_colors=6):
@@ -42,9 +89,6 @@ def show_color_suggestion(i: int):
     color = "#{:02x}{:02x}{:02x}".format(*colors[i])
     st.color_picker(color,value=color, disabled=False)
     st_copy_to_clipboard(color)
-    st.toast(f"🔥 Copied {color}")
-
-
 
 # Streamlit app layout
 st.title("💸 QR Code Generator")
@@ -78,7 +122,7 @@ if uploaded_image:
     # Get six color suggestions from the image
     colors = get_image_colors(img_path)
 
-    st.sidebar.write("Suggested Colors from the Image:")
+    st.sidebar.write("Suggested Colors:")
 
     col1, col2, col3 = st.sidebar.columns(3)
     with col1:
