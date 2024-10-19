@@ -1,6 +1,6 @@
 import os
 import qrcode
-from PIL import Image
+from PIL import Image, ImageOps
 import streamlit as st
 from io import BytesIO
 from pathlib import Path
@@ -10,8 +10,6 @@ import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="QR Generator",
-    page_icon=":man-bowing:",
-    layout="wide",
 )
 
 # Tell streamlit that there is a component called streamlit_copy_to_clipboard,
@@ -29,22 +27,6 @@ def st_copy_to_clipboard(
     show_text: bool = False,
     key: Optional[str] = None,
 ):
-    """
-    Streamlit component to copy text to clipboard.
-
-    Parameters
-    ----------
-    text : str
-        The text to be copied to the clipboard.
-    before_copy_label : str
-        Label of the button before text is copied.
-    after_copy_label : str
-        Label of the button after text is copied.
-    show_text: bool
-        If True, show text right before the button and make it clickable as well
-    key : str or None
-        An optional key that uniquely identifies the component.
-    """
     component_value = _component_func(
         key=key,
         text=text,
@@ -61,8 +43,8 @@ def get_image_colors(image_path, num_colors=6):
     palette = color_thief.get_palette(color_count=num_colors)
     return palette
 
-# Function to generate QR code with customizable colors and sizes
-def generateQR(qr_string: str, image_path: str, fg_color: str, bg_color: str, qr_size: int, logo_size_factor: float):
+# Function to generate QR code with customizable colors, sizes, and padding
+def generateQR(qr_string: str, image_path: str, fg_color: str, bg_color: str, qr_size: int, logo_size_factor: float, padding: int, padding_color: str):
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -81,6 +63,10 @@ def generateQR(qr_string: str, image_path: str, fg_color: str, bg_color: str, qr
         logo_size = (int(qr_img.size[0] * logo_size_factor), int(qr_img.size[1] * logo_size_factor))
         logo = logo.resize(logo_size)
 
+        # Add padding to the logo
+        if padding > 0:
+            logo = ImageOps.expand(logo, border=padding, fill=padding_color)
+
         # Calculate position to center the logo on the QR code
         pos = ((qr_img.size[0] - logo.size[0]) // 2, (qr_img.size[1] - logo.size[1]) // 2)
         qr_img.paste(logo, pos)
@@ -89,7 +75,7 @@ def generateQR(qr_string: str, image_path: str, fg_color: str, bg_color: str, qr
 
 def show_color_suggestion(i: int):
     color = "#{:02x}{:02x}{:02x}".format(*colors[i])
-    st.color_picker(color,value=color, disabled=False)
+    st.color_picker(color, value=color, disabled=False)
     st_copy_to_clipboard(color, key=f"clip_{i}")
 
 # Streamlit app layout
@@ -103,6 +89,7 @@ uploaded_image = st.file_uploader("Upload an image (optional, for embedding)", t
 # Initial default colors for QR code
 default_fg_color = "#000000"
 default_bg_color = "#FFFFFF"
+padding_color = "#FFFFFF"
 
 # Variables to hold selected colors for foreground and background
 if 'fg_color' not in st.session_state:
@@ -115,6 +102,8 @@ if 'bg_color' not in st.session_state:
 qr_size = st.sidebar.slider("QR Code Size", min_value=5, max_value=20, value=10)
 logo_size_factor = st.sidebar.slider("Embedded Image Size", min_value=0.1, max_value=0.5, value=0.25)
 
+# Padding options
+padding = st.sidebar.slider("Embedded Image Padding", min_value=0, max_value=20, value=0)
 # Display color suggestions if an image is uploaded
 if uploaded_image:
     img = Image.open(uploaded_image)
@@ -137,20 +126,21 @@ if uploaded_image:
         show_color_suggestion(4)
         show_color_suggestion(5)
         
-    # Color pickers for foreground and background in sidebar
-    st.session_state.fg_color = st.sidebar.color_picker("QR Foreground Color", value=default_fg_color)
-    st.session_state.bg_color = st.sidebar.color_picker("QR Background Color", value=default_bg_color)
+    st.session_state.fg_color = st.sidebar.color_picker("QR foreground color", value=default_fg_color)
+    st.session_state.bg_color = st.sidebar.color_picker("QR background color", value=default_bg_color)
+    st.session_state.pd_color = st.sidebar.color_picker("Image padding color", value=padding_color)
 else:
     # If no image is uploaded, use color pickers for manual selection
-    st.session_state.fg_color = st.sidebar.color_picker("QR Foreground Color", value=default_fg_color)
-    st.session_state.bg_color = st.sidebar.color_picker("QR Background Color", value=default_bg_color)
+    st.session_state.fg_color = st.sidebar.color_picker("QR foreground color", value=default_fg_color)
+    st.session_state.bg_color = st.sidebar.color_picker("QR background color", value=default_bg_color)
+    st.session_state.pd_color = st.sidebar.color_picker("Image padding color", value=padding_color)
 
 # Realtime preview of the QR code in the main layout
 if qr_string:
     if uploaded_image:
-        qr_img = generateQR(qr_string, img_path, st.session_state.fg_color, st.session_state.bg_color, qr_size, logo_size_factor)
+        qr_img = generateQR(qr_string, img_path, st.session_state.fg_color, st.session_state.bg_color, qr_size, logo_size_factor, padding, st.session_state.pd_color)
     else:
-        qr_img = generateQR(qr_string, None, st.session_state.fg_color, st.session_state.bg_color, qr_size, logo_size_factor)
+        qr_img = generateQR(qr_string, None, st.session_state.fg_color, st.session_state.bg_color, qr_size, logo_size_factor, padding, st.session_state.pd_color)
 
     st.image(qr_img, caption="Generated QR Code", width=300, use_column_width=False, output_format="auto")
 
