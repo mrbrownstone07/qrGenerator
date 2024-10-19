@@ -127,4 +127,3 @@ if qr_string:
         os.remove(img_path)
 else:
     st.error("Please enter some text for the QR Code.")
-pip 
