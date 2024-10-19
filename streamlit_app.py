@@ -41,9 +41,8 @@ def generateQR(qr_string: str, image_path: str, fg_color: str, bg_color: str, qr
 def show_color_suggestion(i: int):
     color = "#{:02x}{:02x}{:02x}".format(*colors[i])
     st.color_picker(color,value=color, disabled=False)
-    if st.button(f"📋", key=f"copy_hex_{color}"):
-        st_copy_to_clipboard(color)
-        st.toast(f"🔥 Copied {color}")
+    st_copy_to_clipboard(color)
+    st.toast(f"🔥 Copied {color}")
 
 
 
