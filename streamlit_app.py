@@ -3,14 +3,16 @@ import qrcode
 from PIL import Image
 import streamlit as st
 from io import BytesIO
-from colorthief import ColorThief
-
-
 from pathlib import Path
 from typing import Optional
-
-import streamlit as st
+from colorthief import ColorThief
 import streamlit.components.v1 as components
+
+st.set_page_config(
+    page_title="QR Generator",
+    page_icon=":man-bowing:",
+    layout="wide",
+)
 
 # Tell streamlit that there is a component called streamlit_copy_to_clipboard,
 # and that the code to display that component is in the "frontend" folder
