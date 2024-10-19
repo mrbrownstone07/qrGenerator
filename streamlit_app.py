@@ -19,6 +19,8 @@ _component_func = components.declare_component(
     "streamlit_copy_to_clipboard", path=str(frontend_dir)
 )
 
+st.sidebar.title("Config")
+
 
 def st_copy_to_clipboard(
     text: str,
