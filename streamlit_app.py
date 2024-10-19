@@ -1,11 +1,10 @@
 import os
 import qrcode
-import pyperclip
 from PIL import Image
 import streamlit as st
 from io import BytesIO
 from colorthief import ColorThief
-
+from st_copy_to_clipboard import st_copy_to_clipboard
 
 # Function to extract color suggestions from an image
 def get_image_colors(image_path, num_colors=6):
@@ -43,7 +42,7 @@ def show_color_suggestion(i: int):
     color = "#{:02x}{:02x}{:02x}".format(*colors[i])
     st.color_picker(color,value=color, disabled=False)
     if st.button(f"📋", key=f"copy_hex_{color}"):
-        pyperclip.copy(color)
+        st_copy_to_clipboard(color)
         st.toast(f"🔥 Copied {color}")
 
 
