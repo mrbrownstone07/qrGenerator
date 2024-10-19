@@ -88,7 +88,7 @@ def generateQR(qr_string: str, image_path: str, fg_color: str, bg_color: str, qr
 def show_color_suggestion(i: int):
     color = "#{:02x}{:02x}{:02x}".format(*colors[i])
     st.color_picker(color,value=color, disabled=False)
-    st_copy_to_clipboard(color)
+    st_copy_to_clipboard(color, key=f"clip_{i}")
 
 # Streamlit app layout
 st.title("💸 QR Code Generator")
